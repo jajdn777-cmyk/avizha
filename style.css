@@ -113,3 +113,8 @@ background:radial-gradient(ellipse at 50% 35%,#6a0b0b 0,#5e0707 65%);transform:s
 .snd:not(.off):before{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,235,215,.55);animation:snd 2.6s ease-out infinite;pointer-events:none}
 @keyframes snd{from{transform:scale(1);opacity:.8}to{transform:scale(1.7);opacity:0}}
 .snd:focus-visible{outline:2px solid rgba(255,235,215,.8);outline-offset:2px}
+
+/* footer credit */
+.by{margin-top:14cqw;display:flex;flex-direction:column;align-items:center;gap:1.5cqw}
+.by img{width:22cqw;height:22cqw;border-radius:3cqw;display:block;opacity:.95;box-shadow:0 1.6cqw 4cqw rgba(0,0,0,.25)}
+.by span{font:500 3cqw 'Cormorant Garamond',serif;letter-spacing:.3em;color:var(--cream2);opacity:.85;direction:ltr}
