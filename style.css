@@ -92,3 +92,11 @@ background:radial-gradient(ellipse at 50% 35%,#6a0b0b 0,#5e0707 65%);transform:s
 .map iframe{display:block;width:100%;height:100%;border:0}
 .go{display:inline-block;margin-top:4cqw;padding:2.6cqw 6.5cqw;border-radius:10cqw;background:rgba(243,230,214,.1);color:var(--cream);text-decoration:none;font-size:3.8cqw;font-weight:300;transition:background .3s,transform .3s}
 .go:active{background:rgba(243,230,214,.22);transform:scale(.97)}
+
+.cn{opacity:0;transition:opacity 1.5s ease var(--cd,1.8s)}
+.open .cn{opacity:1}
+
+/* ornate filigree corners */
+.corner{position:absolute;width:calc(322*var(--p));aspect-ratio:236/230;pointer-events:none}
+.corner img{display:block;width:100%;height:100%;clip-path:inset(0 100% 100% 0);opacity:0;filter:drop-shadow(0 .4cqw .8cqw rgba(0,0,0,.25));transition:clip-path 2.4s cubic-bezier(.45,0,.2,1) var(--cd,1s),opacity .8s ease var(--cd,1s)}
+.open .corner img{clip-path:inset(0 0 0 0);opacity:.96}
