@@ -1,3 +1,56 @@
+// background music: primed on the first tap, fades in when the opening video ends
+var Music=(function(){
+  var a=document.getElementById('bgm'),b=document.getElementById('snd');
+  if(!a||!b)return{prime:function(){},begin:function(){}};
+  var MAX=.55,fadeT=null,muteT=null,live=false,userMuted=false;
+  function ui(){
+    var on=!a.paused&&!a.muted;
+    b.classList.toggle('off',!on);
+    b.setAttribute('aria-pressed',on?'false':'true');
+    b.setAttribute('aria-label',on?'قطع موسیقی':'پخش موسیقی');
+  }
+  function fade(to,ms){
+    clearInterval(fadeT);
+    var from=a.volume,t0=Date.now();
+    fadeT=setInterval(function(){
+      var k=Math.min(1,(Date.now()-t0)/ms);
+      try{a.volume=from+(to-from)*k;}catch(e){}
+      if(k>=1)clearInterval(fadeT);
+    },50);
+  }
+  function play(){var p=a.play();if(p&&p.catch)p.catch(function(){ui();});}
+  // called inside the first tap so the browser lets audio run later
+  function prime(){a.muted=true;try{a.volume=0;}catch(e){}play();}
+  function begin(){
+    if(live)return;live=true;
+    try{a.currentTime=0;}catch(e){}
+    a.muted=false;try{a.volume=0;}catch(e){}
+    play();fade(MAX,2500);ui();
+  }
+  function toggle(){
+    if(!live)return;
+    clearTimeout(muteT);
+    var on=!a.paused&&!a.muted;
+    if(on){
+      userMuted=true;fade(0,350);
+      muteT=setTimeout(function(){a.muted=true;ui();},380);
+    }else{
+      userMuted=false;a.muted=false;try{a.volume=0;}catch(e){}
+      play();fade(MAX,1200);
+    }
+    ui();
+  }
+  b.addEventListener('click',toggle);
+  ['play','pause','volumechange'].forEach(function(ev){a.addEventListener(ev,ui);});
+  document.addEventListener('visibilitychange',function(){
+    if(!live)return;
+    if(document.hidden)a.pause();
+    else if(!userMuted)play();
+  });
+  ui();
+  return{prime:prime,begin:begin};
+})();
+
 (function(){
   var st=document.getElementById('stage'),intro=document.getElementById('intro'),v=document.getElementById('v'),
       flash=document.getElementById('flash'),card=document.getElementById('card'),dust=document.getElementById('dust'),
@@ -27,12 +80,14 @@
   function open(){
     if(opened)return;opened=true;
     flash.classList.add('on');
+    Music.begin();
     setTimeout(function(){intro.classList.add('done');},500);
     setTimeout(function(){intro.style.display='none';},1700);
     setTimeout(reveal,900);
   }
   function start(){
     if(started)return;started=true;intro.classList.add('go');
+    Music.prime();
     var p;try{p=v.play();}catch(e){}
     if(p&&p.catch)p.catch(function(){setTimeout(open,300)});
     v.addEventListener('timeupdate',function(){if(v.duration&&v.currentTime>=v.duration-.55)open();});
@@ -45,9 +100,9 @@
   intro.tabIndex=0;
 })();
 
-// countdown to the event: Saturday 16 Aqrab 1405 = 7 Nov 2026, 1:00 PM Kabul time (UTC+4:30)
+// countdown to the event: Monday 18 Aqrab 1405 = 9 Nov 2026, 1:00 PM Kabul time (UTC+4:30)
 (function(){
-  var start=new Date('2026-11-07T13:00:00+04:30').getTime(),end=new Date('2026-11-07T16:00:00+04:30').getTime();
+  var start=new Date('2026-11-09T13:00:00+04:30').getTime(),end=new Date('2026-11-09T16:00:00+04:30').getTime();
   var cd=document.getElementById('cd'),note=document.getElementById('cdn');if(!cd||!note)return;
   var els={};[].forEach.call(cd.querySelectorAll('b'),function(b){els[b.dataset.k]=b;});
   var fa='۰۱۲۳۴۵۶۷۸۹';
@@ -61,4 +116,77 @@
     set('d',Math.floor(s/86400));set('h',Math.floor(s%86400/3600));set('m',Math.floor(s%3600/60));set('s',s%60);
   }
   tick();setInterval(tick,1000);
+})();
+
+// RSVP
+(function(){
+  // Paste your form endpoint here (e.g. 'https://formspree.io/f/xxxxxxxx').
+  // While it is empty, the RSVP opens WhatsApp with a ready-made message instead.
+  var ENDPOINT='';
+  var WHATSAPP='93703203897';
+  var KEY='avizha-rsvp',MAX=5,fa='۰۱۲۳۴۵۶۷۸۹';
+
+  var box=document.getElementById('rsvpBox'),f=document.getElementById('rsvp');if(!box||!f)return;
+  var $=function(id){return document.getElementById(id)};
+  var nameEl=$('rn'),phoneEl=$('rp'),noteEl=$('rm'),msg=$('rmsg'),btn=$('rsub'),gs=$('gs'),gn=$('gn'),
+      title=$('rdt'),sub=$('rds'),again=$('ragain'),steps=f.querySelectorAll('[data-step]'),n=1;
+
+  function faN(x){return String(x).replace(/\d/g,function(d){return fa[d]})}
+  function enN(s){return s.replace(/[۰-۹]/g,function(d){return fa.indexOf(d)}).replace(/[٠-٩]/g,function(d){return d.charCodeAt(0)-1632})}
+  function yes(){return f.elements.att.value==='yes'}
+  function say(t){msg.textContent=t||''}
+
+  function setGuests(v){
+    n=Math.max(1,Math.min(MAX,v));
+    gn.textContent=faN(n);f.elements.guests.value=n;
+    steps[0].disabled=n<=1;steps[1].disabled=n>=MAX;
+  }
+  [].forEach.call(steps,function(b){b.addEventListener('click',function(){setGuests(n+parseInt(b.dataset.step,10))})});
+  [].forEach.call(f.elements.att,function(r){r.addEventListener('change',function(){gs.classList.toggle('hide',!yes())})});
+  [nameEl,phoneEl].forEach(function(el){el.addEventListener('input',function(){el.classList.remove('bad');say('')})});
+  setGuests(1);
+
+  function show(attending){
+    title.textContent=attending?'حضور شما ثبت شد':'پاسخ شما ثبت شد';
+    sub.textContent=attending?'منتظر دیدارتان در آویژه هستیم.':'از لطف شما سپاسگزاریم؛ جای شما خالی خواهد بود.';
+    box.classList.add('sent');
+  }
+  function finish(attending){
+    try{localStorage.setItem(KEY,JSON.stringify({yes:attending}))}catch(e){}
+    show(attending);
+  }
+  function busy(on){btn.disabled=on;btn.textContent=on?'در حال ارسال…':'ارسال تأیید حضور'}
+
+  f.addEventListener('submit',function(e){
+    e.preventDefault();say('');
+    var name=nameEl.value.trim(),
+        phone=enN(phoneEl.value).replace(/[\s\-().]/g,''),
+        note=noteEl.value.trim(),att=yes();
+    if(f.elements.website.value){finish(att);return;} // honeypot: silently ignore bots
+    if(name.length<2){nameEl.classList.add('bad');say('لطفاً نام خود را وارد کنید.');nameEl.focus();return;}
+    if(!/^\+?\d{9,14}$/.test(phone)){phoneEl.classList.add('bad');say('لطفاً شماره تماس معتبر وارد کنید.');phoneEl.focus();return;}
+    var data={name:name,phone:phone,attending:att?'yes':'no',guests:att?n:0,note:note,event:'Avizha opening 18 Aqrab 1405'};
+
+    if(ENDPOINT){
+      busy(true);
+      fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+        .then(function(r){if(!r.ok)throw new Error('bad');finish(att);})
+        .catch(function(){say('ارسال ناموفق بود؛ لطفاً دوباره تلاش کنید.');})
+        .then(function(){busy(false);});
+    }else{
+      var t='سلام، تأیید حضور برای محفل افتتاحیه آویژه\n'+
+            'نام: '+name+'\nشماره تماس: '+phone+'\n'+
+            (att?'حضور: بله، '+faN(n)+' نفر':'حضور: متأسفانه نمی‌توانم')+
+            (note?'\nپیام: '+note:'');
+      window.open('https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(t),'_blank','noopener');
+      finish(att);
+    }
+  });
+
+  again.addEventListener('click',function(){
+    try{localStorage.removeItem(KEY)}catch(e){}
+    box.classList.remove('sent');
+  });
+
+  try{var s=JSON.parse(localStorage.getItem(KEY));if(s)show(!!s.yes);}catch(e){}
 })();
