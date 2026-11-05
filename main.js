@@ -44,3 +44,21 @@
   intro.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')start();});
   intro.tabIndex=0;
 })();
+
+// countdown to the event: Saturday 16 Aqrab 1405 = 7 Nov 2026, 1:00 PM Kabul time (UTC+4:30)
+(function(){
+  var start=new Date('2026-11-07T13:00:00+04:30').getTime(),end=new Date('2026-11-07T16:00:00+04:30').getTime();
+  var cd=document.getElementById('cd'),note=document.getElementById('cdn');if(!cd||!note)return;
+  var els={};[].forEach.call(cd.querySelectorAll('b'),function(b){els[b.dataset.k]=b;});
+  var fa='۰۱۲۳۴۵۶۷۸۹';
+  function p(n,len){var s=String(n);while(s.length<len)s='0'+s;return s.replace(/\d/g,function(d){return fa[d];});}
+  function set(k,v){var s=p(v,2);if(els[k].textContent!==s){els[k].textContent=s;els[k].classList.remove('tick');void els[k].offsetWidth;els[k].classList.add('tick');}}
+  function tick(){
+    var now=Date.now(),d=start-now;
+    if(d<=0){cd.classList.add('off');note.classList.add('big');
+      note.textContent=now<end?'محفل هم‌اکنون در حال برگزاری است':'از حضور شما سپاسگزاریم';return;}
+    var s=Math.floor(d/1000);
+    set('d',Math.floor(s/86400));set('h',Math.floor(s%86400/3600));set('m',Math.floor(s%3600/60));set('s',s%60);
+  }
+  tick();setInterval(tick,1000);
+})();
